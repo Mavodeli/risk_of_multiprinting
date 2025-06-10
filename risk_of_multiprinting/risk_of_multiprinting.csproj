@@ -2,8 +2,8 @@
 
   <PropertyGroup>
     <TargetFramework>net35</TargetFramework>
-    <AssemblyName>rsik_of_multiprinting</AssemblyName>
-    <Product>My first plugin</Product>
+    <AssemblyName>risk_of_multiprinting</AssemblyName>
+    <Product>Risk of Multiprinting</Product>
     <Version>1.0.0</Version>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <LangVersion>latest</LangVersion>
@@ -12,7 +12,7 @@
       https://nuget.bepinex.dev/v3/index.json;
       https://nuget.samboy.dev/v3/index.json
     </RestoreAdditionalProjectSources>
-    <RootNamespace>rsik_of_multiprinting</RootNamespace>
+    <RootNamespace>risk_of_multiprinting</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>

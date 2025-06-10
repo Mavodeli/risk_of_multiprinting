@@ -2,7 +2,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.5.2.0
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "rsik_of_multiprinting", "rsik_of_multiprinting\rsik_of_multiprinting.csproj", "{7A70CFD4-962A-B01F-799B-2E30B440A31F}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "risk_of_multiprinting", "risk_of_multiprinting\risk_of_multiprinting.csproj", "{4922135A-F36D-17A4-7A1C-27A5FB98913D}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -10,15 +10,15 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{7A70CFD4-962A-B01F-799B-2E30B440A31F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{7A70CFD4-962A-B01F-799B-2E30B440A31F}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{7A70CFD4-962A-B01F-799B-2E30B440A31F}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{7A70CFD4-962A-B01F-799B-2E30B440A31F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4922135A-F36D-17A4-7A1C-27A5FB98913D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4922135A-F36D-17A4-7A1C-27A5FB98913D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4922135A-F36D-17A4-7A1C-27A5FB98913D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4922135A-F36D-17A4-7A1C-27A5FB98913D}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
-		SolutionGuid = {50125BF3-F96E-4924-89CF-3B767D0A160E}
+		SolutionGuid = {5A7A5E8A-296F-4EE9-9689-20CE1B86A3C9}
 	EndGlobalSection
 EndGlobal

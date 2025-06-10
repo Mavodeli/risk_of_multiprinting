@@ -1,7 +1,7 @@
 ﻿using BepInEx;
 using BepInEx.Logging;
 
-namespace rsik_of_multiprinting;
+namespace risk_of_multiprinting;
 
 [BepInPlugin(MyPluginInfo.PLUGIN_GUID, MyPluginInfo.PLUGIN_NAME, MyPluginInfo.PLUGIN_VERSION)]
 public class Plugin : BaseUnityPlugin
