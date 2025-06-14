@@ -6,6 +6,7 @@ using RoR2;
 using HarmonyLib;
 using risk_of_multiprinting.patches.duplicating;
 using risk_of_multiprinting.patches.scraplimit;
+using System.Reflection;
 
 namespace risk_of_multiprinting;
 
@@ -15,11 +16,16 @@ public class Plugin : BaseUnityPlugin
 {
     internal static new ManualLogSource Logger;
     private Harmony harmonyPatcher;
+    public static PluginInfo PInfo { get; private set; }
 
     private void Awake()
     {
         // Plugin startup logic
         Logger = base.Logger;
+
+        PInfo = Info;
+        risk_of_multiprinting.patches.duplicating.amountSelectorAsset.Init();
+
         Logger.LogInfo($"Plugin {MyPluginInfo.PLUGIN_GUID} is loaded!");
 
         RoR2.Stage.onStageStartGlobal += delegate (Stage self)
