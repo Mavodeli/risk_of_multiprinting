@@ -65,6 +65,8 @@ namespace risk_of_multiprinting.patches.duplicating
             {
                 __instance.GetComponent<ShopTerminalBehavior>().DropPickup();
             }
+            // reset cost to duplicator default value of 1
+            purchaseInteraction.cost = 1;
 
             if (!(bool)(Object)__instance.muzzleTransform) { return false; }
             if ((bool)(Object)__instance.bakeEffectInstance)
@@ -139,14 +141,22 @@ namespace risk_of_multiprinting.patches.duplicating
                 if (chosenValue != 0)
                 {
                     UnityEngine.Debug.Log("Risk of Multiprinting: Calling original function with modified values");
-                    int originalCost = __instance.cost;
                     __instance.cost = chosenValue;
 
                     // mark this interaction to be finished
                     __instance.saleStarCompatible = true;
 
-                    __instance.OnInteractionBegin(activator);
-                    __instance.cost = originalCost;
+                    // check affordability
+                    if (__instance.CanBeAffordedByInteractor(activator))
+                    {
+                        __instance.OnInteractionBegin(activator);
+                    }
+                    else
+                    {
+                        // reset
+                        __instance.saleStarCompatible = false;
+                        __instance.cost = 1;
+                    }
                 }
             });
 
