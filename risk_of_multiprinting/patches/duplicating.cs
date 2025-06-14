@@ -16,6 +16,7 @@ using System.Collections.Generic;
 using RoR2.Stats;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using Rewired;
 
 namespace risk_of_multiprinting.patches.duplicating
 {
@@ -105,8 +106,21 @@ namespace risk_of_multiprinting.patches.duplicating
             UnityEngine.Debug.Log("Risk of Multiprinting: Opening duplicator prompt");
 
             // prompt user
-            HUD hud;
-            if (HUD.instancesList.Count > 0) { hud = HUD.instancesList[0]; }
+            HUD hud = null;
+            if (HUD.instancesList.Count > 0)
+            {
+                CharacterBody interactingPlayerBody = activator.GetComponent<CharacterBody>();
+                string interactingPlayerUsername = interactingPlayerBody.GetUserName();
+
+                foreach (HUD h in HUD.instancesList)
+                {
+                    CharacterBody hudCharacterBody = h.cameraRigController.targetBody;
+                    if (hudCharacterBody.GetUserName() == interactingPlayerUsername)
+                    {
+                        hud = h;
+                    }
+                }
+            }
             else
             {
                 UnityEngine.Debug.Log("Risk of Mutliprinting: No HUD found!");
