@@ -1,17 +1,17 @@
 ﻿using BepInEx;
 using BepInEx.Logging;
-using EntityStates.Duplicator;
 using EntityStates.Scrapper;
 using RoR2;
 using HarmonyLib;
 using risk_of_multiprinting.patches.duplicating;
 using risk_of_multiprinting.patches.scraplimit;
-using System.Reflection;
+using R2API.Networking;
 
 namespace risk_of_multiprinting;
 
 [BepInPlugin(MyPluginInfo.PLUGIN_GUID, MyPluginInfo.PLUGIN_NAME, MyPluginInfo.PLUGIN_VERSION)]
 [BepInProcess("Risk of Rain 2.exe")]
+[BepInDependency(NetworkingAPI.PluginGUID)]
 public class Plugin : BaseUnityPlugin
 {
     internal static new ManualLogSource Logger;
@@ -40,6 +40,7 @@ public class Plugin : BaseUnityPlugin
         harmonyPatcher = new Harmony(MyPluginInfo.PLUGIN_GUID);
 
         Logger.LogInfo("Patching Duplicating");
+        NetworkingAPI.RegisterMessageType<SendCustomAmountRPC>();
         harmonyPatcher.CreateClassProcessor(typeof(DuplicatingPatch)).Patch();
 
         Logger.LogInfo("Patching Scrap Limit");

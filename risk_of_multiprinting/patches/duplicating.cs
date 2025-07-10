@@ -5,18 +5,10 @@ using Object = UnityEngine.Object;
 using EntityStates.Duplicator;
 using RoR2;
 using RoR2.UI;
-using System.IO;
-using UnityEngineInternal.Input;
 using UnityEngine.UI;
 using TMPro;
-using System.Threading;
-using System.Threading.Tasks;
-using System;
-using System.Collections.Generic;
-using RoR2.Stats;
-using System.Linq;
-using System.Runtime.CompilerServices;
-using Rewired;
+using R2API.Networking.Interfaces;
+using UnityEngine.Networking;
 
 namespace risk_of_multiprinting.patches.duplicating
 {
@@ -87,52 +79,32 @@ namespace risk_of_multiprinting.patches.duplicating
             return false;
         }
 
-        [HarmonyPatch(typeof(PurchaseInteraction), nameof(PurchaseInteraction.OnInteractionBegin))]
+        [HarmonyPatch(typeof(Interactor), nameof(Interactor.AttemptInteraction))]
         [HarmonyPrefix]
-        static bool ChooseCustomAmount(Interactor activator, PurchaseInteraction __instance)
+        static bool ChooseCustomAmount(GameObject interactableObject, Interactor __instance)
         {
             // ignore anything that isn't a duplicator
-            if (!__instance.gameObject.name.Contains("Duplicator")) { return true; }
+            if (!interactableObject.name.Contains("Duplicator")) { return true; }
 
-            // handle past interactions (we hijack saleStarCompatible for this)
-            if (__instance.saleStarCompatible)
-            {
-                UnityEngine.Debug.Log("Risk of Multiprinting: Passing along to original function...");
-                // reset additional data so finishInteraction defaults to false
-                __instance.saleStarCompatible = false;
-                return true;
-            }
+            PurchaseInteraction purchaseInteraction = interactableObject.GetComponent<PurchaseInteraction>();
+            if (!purchaseInteraction) { return true; }
 
-            UnityEngine.Debug.Log("Risk of Multiprinting: Opening duplicator prompt");
 
             // prompt user
-            HUD hud = null;
-            if (HUD.instancesList.Count > 0)
-            {
-                CharacterBody interactingPlayerBody = activator.GetComponent<CharacterBody>();
-                string interactingPlayerUsername = interactingPlayerBody.GetUserName();
+            UnityEngine.Debug.Log("Risk of Multiprinting: Opening duplicator prompt");
+            LocalUser firstLocalUser = LocalUserManager.GetFirstLocalUser();
 
-                foreach (HUD h in HUD.instancesList)
-                {
-                    CharacterBody hudCharacterBody = h.cameraRigController.targetBody;
-                    if (hudCharacterBody.GetUserName() == interactingPlayerUsername)
-                    {
-                        hud = h;
-                    }
-                }
-            }
-            else
-            {
-                UnityEngine.Debug.Log("Risk of Mutliprinting: No HUD found!");
-                return false;
-            }
+            HUD hud = HUD.instancesList.Find(instance => instance.localUserViewer == firstLocalUser);
+            if (!hud) { UnityEngine.Debug.Log("Risk of Mutliprinting: No HUD found!"); return false; }
+
+            MPEventSystem eventSystem = MPEventSystem.instancesList.Find(instance => instance.localUser == firstLocalUser);
+            if (!eventSystem) { return false; }
 
             int chosenValue = 0;
 
             var prefab = amountSelectorAsset.mainBundle.LoadAsset<GameObject>("multiprintingAmountSelectorPanel");
             GameObject panel = GameObject.Instantiate(prefab, hud.mainContainer.transform);
 
-            MPEventSystem eventSystem = MPEventSystem.instancesList[0];
             eventSystem.cursorOpenerCount += 1;
 
             Transform textObjectTransform = panel.transform.Find("Text");
@@ -154,28 +126,98 @@ namespace risk_of_multiprinting.patches.duplicating
 
                 if (chosenValue != 0)
                 {
-                    UnityEngine.Debug.Log("Risk of Multiprinting: Calling original function with modified values");
-                    __instance.cost = chosenValue;
-
-                    // mark this interaction to be finished
-                    __instance.saleStarCompatible = true;
-
-                    // check affordability
-                    if (__instance.CanBeAffordedByInteractor(activator))
+                    if (NetworkServer.active)
                     {
-                        __instance.OnInteractionBegin(activator);
+                        // if we're the host we don't send an RPC message
+                        UnityEngine.Debug.Log("Risk of Multiprinting: Directly calling function with modified values");
+                        InteractorAdditions interactorAdditions = new InteractorAdditions();
+                        interactorAdditions.PerformModifiedDuplicationInteraction(__instance, interactableObject, chosenValue);
                     }
                     else
                     {
-                        // reset
-                        __instance.saleStarCompatible = false;
-                        __instance.cost = 1;
+                        // if we're a client we send an RPC message
+                        UnityEngine.Debug.Log("Risk of Multiprinting: Sending RPC message to host with modified values");
+                        new SendCustomAmountRPC(__instance.gameObject, interactableObject, chosenValue).Send(R2API.Networking.NetworkDestination.Server);
                     }
                 }
             });
 
             // always abort the interaction, we continue it in the button event handler
             return false;
+        }
+    }
+
+    public class SendCustomAmountRPC : INetMessage
+    {
+        GameObject interactorParentObject;
+        GameObject duplicator;
+        int customAmount;
+
+        public SendCustomAmountRPC() { }
+
+        public SendCustomAmountRPC(GameObject interactorParentObject, GameObject duplicator, int customAmount)
+        {
+            this.interactorParentObject = interactorParentObject;
+            this.duplicator = duplicator;
+            this.customAmount = customAmount;
+        }
+
+        public void Deserialize(NetworkReader reader)
+        {
+            interactorParentObject = reader.ReadGameObject();
+            duplicator = reader.ReadGameObject();
+            customAmount = reader.ReadInt32();
+        }
+
+        public void OnReceived()
+        {
+            // clients ignore this message
+            if (!NetworkServer.active) { return; }
+
+            // get interactor
+            Interactor interactor = interactorParentObject.GetComponent<Interactor>();
+
+            if (!interactor) { UnityEngine.Debug.Log("Risk of Multiprinting: Restoring interactor from parent object failed!"); return; }
+            if (!duplicator) { UnityEngine.Debug.Log("Risk of Multiprinting: transmitting duplicator object failed!"); return; }
+
+            UnityEngine.Debug.Log("Risk of Multiprinting: Received RPC message for modified duplication interaction");
+            InteractorAdditions interactorAdditions = new InteractorAdditions();
+            interactorAdditions.PerformModifiedDuplicationInteraction(interactor, duplicator, customAmount);
+        }
+
+        public void Serialize(NetworkWriter writer)
+        {
+            writer.Write(interactorParentObject);
+            writer.Write(duplicator);
+            writer.Write(customAmount);
+        }
+    }
+
+    public class InteractorAdditions
+    {
+        [Server]
+        public void PerformModifiedDuplicationInteraction(Interactor interactor, GameObject duplicator, int customAmount)
+        {
+            if (!NetworkServer.active)
+            {
+                UnityEngine.Debug.LogWarning((object)"[Server] function 'System.Void RoR2.InteractorAdditions::PerformModifiedDuplicationInteraction(UnityEngine.GameObject)' called on client");
+                return;
+            }
+
+            PurchaseInteraction purchaseInteraction = duplicator.GetComponent<PurchaseInteraction>();
+            Interactability interactability = purchaseInteraction.GetInteractability(interactor);
+
+            if (interactability == Interactability.Available)
+            {
+                // set custom value
+                purchaseInteraction.cost = customAmount;
+
+                // check affordability and reset if necessary
+                if (!purchaseInteraction.CanBeAffordedByInteractor(interactor)) { purchaseInteraction.cost = 1; return; }
+
+                purchaseInteraction.OnInteractionBegin(interactor);
+                GlobalEventManager.instance.OnInteractionBegin(interactor, purchaseInteraction, duplicator);
+            }
         }
     }
 
