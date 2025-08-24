@@ -6,6 +6,9 @@ using HarmonyLib;
 using risk_of_multiprinting.patches.duplicating;
 using risk_of_multiprinting.patches.scraplimit;
 using R2API.Networking;
+using UnityEngine;
+using System;
+using System.Collections.Generic;
 
 namespace risk_of_multiprinting;
 
@@ -17,6 +20,7 @@ public class Plugin : BaseUnityPlugin
     internal static new ManualLogSource Logger;
     private Harmony harmonyPatcher;
     public static PluginInfo PInfo { get; private set; }
+    public static InputHandler inputHandler;
 
     private void Awake()
     {
@@ -24,7 +28,7 @@ public class Plugin : BaseUnityPlugin
         Logger = base.Logger;
 
         PInfo = Info;
-        risk_of_multiprinting.patches.duplicating.amountSelectorAsset.Init();
+        risk_of_multiprinting.patches.duplicating.AmountSelectorAsset.Init();
 
         Logger.LogInfo($"Plugin {MyPluginInfo.PLUGIN_GUID} is loaded!");
 
@@ -45,5 +49,69 @@ public class Plugin : BaseUnityPlugin
 
         Logger.LogInfo("Patching Scrap Limit");
         harmonyPatcher.CreateClassProcessor(typeof(ScrapLimitPatch)).Patch();
+
+        inputHandler = new InputHandler();
+        inputHandler.inputSystem = UnityInput.Current;
+    }
+
+    private void Update()
+    {
+        inputHandler.update();
+    }
+}
+
+public class InputHandler
+{
+    public IInputSystem inputSystem;
+
+    public static class KeyBindings
+    {
+        public static KeyCode[] confirmButtons = { KeyCode.F };
+        public static KeyCode[] abortButtons = { KeyCode.Escape, KeyCode.Space, KeyCode.E, KeyCode.Return, KeyCode.KeypadEnter, KeyCode.W, KeyCode.A, KeyCode.S, KeyCode.D };
+    }
+
+    private List<(Action onConfirm, Action onAbort)> activeListeners = new List<(Action onConfirm, Action onAbort)>();
+
+    public void registerListener(Action onConfirm, Action onAbort)
+    {
+        activeListeners.Add((onConfirm, onAbort));
+    }
+
+    public void abort()
+    {
+        foreach ((Action onConfirm, Action onAbort) actions in activeListeners)
+        {
+            actions.onAbort.Invoke();
+        }
+        activeListeners.Clear();
+    }
+
+    public void confirm()
+    {
+        foreach ((Action onConfirm, Action onAbort) actions in activeListeners)
+        {
+            actions.onConfirm.Invoke();
+        }
+        activeListeners.Clear();
+    }
+
+    public void update()
+    {
+        foreach (KeyCode button in KeyBindings.abortButtons)
+        {
+            if (inputSystem.GetKeyDown(button))
+            {
+                abort();
+                return;
+            }
+        }
+        foreach (KeyCode button in KeyBindings.confirmButtons)
+        {
+            if (inputSystem.GetKeyDown(button))
+            {
+                confirm();
+                return;
+            }
+        }
     }
 }

@@ -1,3 +1,10 @@
 ## Changelog
+- **1.1.0**
+    - Improved injected HUD:
+        - `Added simple design` - hey at least it's not the default unity theme anymore
+        - `Made slider handle more easily grabable` - it matches the visual now 
+        - `Added +/- buttons` to select precise values more easily
+        - `Added keyboard shortcuts` - no more getting trapped in the UI while you panic
+    - Added example image to README
 - **1.0.0**
     - Initial release, tested in Single- and Multiplayer

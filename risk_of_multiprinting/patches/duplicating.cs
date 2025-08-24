@@ -9,10 +9,11 @@ using UnityEngine.UI;
 using TMPro;
 using R2API.Networking.Interfaces;
 using UnityEngine.Networking;
+using System;
 
 namespace risk_of_multiprinting.patches.duplicating
 {
-    public static class amountSelectorAsset
+    public static class AmountSelectorAsset
     {
         //You will load the assetbundle and assign it to here.
         public static AssetBundle mainBundle;
@@ -38,6 +39,37 @@ namespace risk_of_multiprinting.patches.duplicating
         {
             //Loads the assetBundle from the Path, and stores it in the static field.
             mainBundle = AssetBundle.LoadFromFile(AssetBundlePath);
+        }
+
+        public static void addPlusMinusButtonListener(Transform parentTransform, string buttonName, Slider slider, int changeBy)
+        {
+            Button button = parentTransform.Find(buttonName).gameObject.GetComponent<Button>();
+            button.onClick.AddListener(() =>
+            {
+                slider.value += changeBy;
+            });
+        }
+
+        public static Button setupInternalListeners(GameObject panel, Action<int> OnSliderValueChange)
+        {
+            Transform textObjectTransform = panel.transform.Find("Text_currentValue");
+            TextMeshProUGUI textComponent = textObjectTransform.gameObject.GetComponent<TextMeshProUGUI>();
+
+            Slider slider = panel.GetComponentInChildren<Slider>();
+            slider.onValueChanged.AddListener((value) =>
+            {
+                OnSliderValueChange((int)value);
+                textComponent.text = slider.value.ToString();
+            });
+
+            addPlusMinusButtonListener(panel.transform, "Button_Minus_5", slider, -5);
+            addPlusMinusButtonListener(panel.transform, "Button_Minus_1", slider, -1);
+            addPlusMinusButtonListener(panel.transform, "Button_Plus_1", slider, 1);
+            addPlusMinusButtonListener(panel.transform, "Button_Plus_5", slider, 5);
+
+            Transform buttonTransform = panel.transform.Find("Button_Print");
+            Button buttonComponent = buttonTransform.gameObject.GetComponent<Button>();
+            return buttonComponent;
         }
     }
 
@@ -91,55 +123,68 @@ namespace risk_of_multiprinting.patches.duplicating
 
 
             // prompt user
-            UnityEngine.Debug.Log("Risk of Multiprinting: Opening duplicator prompt");
+            Debug.Log("Risk of Multiprinting: Opening duplicator prompt");
             LocalUser firstLocalUser = LocalUserManager.GetFirstLocalUser();
 
             HUD hud = HUD.instancesList.Find(instance => instance.localUserViewer == firstLocalUser);
-            if (!hud) { UnityEngine.Debug.Log("Risk of Mutliprinting: No HUD found!"); return false; }
+            if (!hud) { Debug.Log("Risk of Mutliprinting: No HUD found!"); return false; }
 
             MPEventSystem eventSystem = MPEventSystem.instancesList.Find(instance => instance.localUser == firstLocalUser);
             if (!eventSystem) { return false; }
 
-            int chosenValue = 0;
+            int chosenValue = 1; // default value from injected prefab
 
-            var prefab = amountSelectorAsset.mainBundle.LoadAsset<GameObject>("multiprintingAmountSelectorPanel");
-            GameObject panel = GameObject.Instantiate(prefab, hud.mainContainer.transform);
-
+            // show cursor
             eventSystem.cursorOpenerCount += 1;
 
-            Transform textObjectTransform = panel.transform.Find("Text");
-            TextMeshProUGUI textComponent = textObjectTransform.gameObject.GetComponent<TextMeshProUGUI>();
+            var prefab = AmountSelectorAsset.mainBundle.LoadAsset<GameObject>("multiprintingAmountSelectorPanel");
+            GameObject panel = Object.Instantiate(prefab, hud.mainContainer.transform);
 
-            Slider slider = panel.GetComponentInChildren<Slider>();
-            slider.onValueChanged.AddListener((value) =>
-            {
-                chosenValue = (int)value;
-                textComponent.text = chosenValue.ToString();
-            });
+            Button printButton = AmountSelectorAsset.setupInternalListeners(panel,
+            // action for updating chosenValue:
+            (int newSliderValue) => { chosenValue = newSliderValue; });
 
-            Transform buttonTransform = panel.transform.Find("Button");
-            Button buttonComponent = buttonTransform.gameObject.GetComponent<Button>();
-            buttonComponent.onClick.AddListener(() =>
+            Action<MPEventSystem, GameObject, Interactor, GameObject, int> confirmDuplicating = (MPEventSystem eventSystem, GameObject panel, Interactor __instance, GameObject interactableObject, int chosenValue) =>
             {
                 eventSystem.cursorOpenerCount -= 1;
-                GameObject.Destroy(panel);
+                Object.Destroy(panel);
 
                 if (chosenValue != 0)
                 {
                     if (NetworkServer.active)
                     {
                         // if we're the host we don't send an RPC message
-                        UnityEngine.Debug.Log("Risk of Multiprinting: Directly calling function with modified values");
+                        Debug.Log("Risk of Multiprinting: Directly calling function with modified values");
                         InteractorAdditions interactorAdditions = new InteractorAdditions();
                         interactorAdditions.PerformModifiedDuplicationInteraction(__instance, interactableObject, chosenValue);
                     }
                     else
                     {
                         // if we're a client we send an RPC message
-                        UnityEngine.Debug.Log("Risk of Multiprinting: Sending RPC message to host with modified values");
+                        Debug.Log("Risk of Multiprinting: Sending RPC message to host with modified values");
                         new SendCustomAmountRPC(__instance.gameObject, interactableObject, chosenValue).Send(R2API.Networking.NetworkDestination.Server);
                     }
                 }
+            };
+
+            Action<MPEventSystem, GameObject> abortDuplicating = (MPEventSystem eventSystem, GameObject panel) =>
+            {
+                eventSystem.cursorOpenerCount -= 1;
+                Object.Destroy(panel);
+            };
+
+            printButton.onClick.AddListener(() => { Plugin.inputHandler.confirm(); });
+
+            Plugin.inputHandler.registerListener(
+            // onConfirm Action 
+            () =>
+            {
+                confirmDuplicating.Invoke(eventSystem, panel, __instance, interactableObject, chosenValue);
+            },
+            // onAbort Action
+            () =>
+            {
+                abortDuplicating.Invoke(eventSystem, panel);
             });
 
             // always abort the interaction, we continue it in the button event handler
@@ -177,10 +222,10 @@ namespace risk_of_multiprinting.patches.duplicating
             // get interactor
             Interactor interactor = interactorParentObject.GetComponent<Interactor>();
 
-            if (!interactor) { UnityEngine.Debug.Log("Risk of Multiprinting: Restoring interactor from parent object failed!"); return; }
-            if (!duplicator) { UnityEngine.Debug.Log("Risk of Multiprinting: transmitting duplicator object failed!"); return; }
+            if (!interactor) { Debug.Log("Risk of Multiprinting: Restoring interactor from parent object failed!"); return; }
+            if (!duplicator) { Debug.Log("Risk of Multiprinting: transmitting duplicator object failed!"); return; }
 
-            UnityEngine.Debug.Log("Risk of Multiprinting: Received RPC message for modified duplication interaction");
+            Debug.Log("Risk of Multiprinting: Received RPC message for modified duplication interaction");
             InteractorAdditions interactorAdditions = new InteractorAdditions();
             interactorAdditions.PerformModifiedDuplicationInteraction(interactor, duplicator, customAmount);
         }
@@ -200,7 +245,7 @@ namespace risk_of_multiprinting.patches.duplicating
         {
             if (!NetworkServer.active)
             {
-                UnityEngine.Debug.LogWarning((object)"[Server] function 'System.Void RoR2.InteractorAdditions::PerformModifiedDuplicationInteraction(UnityEngine.GameObject)' called on client");
+                Debug.LogWarning((object)"[Server] function 'System.Void RoR2.InteractorAdditions::PerformModifiedDuplicationInteraction(UnityEngine.GameObject)' called on client");
                 return;
             }
 
