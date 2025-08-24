@@ -3,7 +3,7 @@ A Risk of Rain 2 mod that allows printing multiple items.
 
 Interacting with 3D printers pops up a UI to select up to 50 items to be printed simultanously:
 
-![example image](/examples/multiprinting-ui-example.png)
+![example image](https://raw.githubusercontent.com/Mavodeli/risk_of_multiprinting/refs/heads/main/examples/multiprinting-ui-example.png)
 
 - Use the slider or +/- buttons to select how many items to print 
 - Then press `F` or click the `Print (F)` button

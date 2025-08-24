@@ -1,4 +1,6 @@
 ## Changelog
+- **1.1.1**
+    - Fix preview image on `thunderstore.io` page
 - **1.1.0**
     - Improved injected HUD:
         - `Added simple design` - hey at least it's not the default unity theme anymore

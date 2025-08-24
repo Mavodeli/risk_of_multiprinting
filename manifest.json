@@ -1,7 +1,7 @@
 {
     "name": "Risk_of_Multiprinting",
     "description": "Risk of Rain 2 mod that allows printing of multiple items",
-    "version_number": "1.1.0",
+    "version_number": "1.1.1",
     "dependencies": [
         "bbepis-BepInExPack-5.4.2119",
         "RiskofThunder-R2API_Networking-1.0.3"
