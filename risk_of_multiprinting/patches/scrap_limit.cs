@@ -6,7 +6,7 @@ namespace risk_of_multiprinting.patches.scraplimit
     [HarmonyPatch]
     public class ScrapLimitPatch
     {
-        [HarmonyPatch(typeof(ScrapperController), nameof(ScrapperController.Start))]
+        [HarmonyPatch(typeof(ScrapperController), nameof(ScrapperController.PreStartClient))]
         [HarmonyPostfix]
         static void AlterScrapLimit(ScrapperController __instance)
         {
