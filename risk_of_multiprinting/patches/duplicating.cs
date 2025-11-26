@@ -84,14 +84,18 @@ namespace risk_of_multiprinting.patches.duplicating
 
             __instance.hasDroppedDroplet = true;
 
-            // drop custom amount
-            PurchaseInteraction purchaseInteraction = __instance.GetComponent<PurchaseInteraction>();
-            for (int i = 0; i < purchaseInteraction.cost; i++)
+            if (NetworkServer.active)
             {
-                __instance.GetComponent<ShopTerminalBehavior>().DropPickup();
+                // drop custom amount
+                PurchaseInteraction purchaseInteraction = __instance.GetComponent<PurchaseInteraction>();
+                for (int i = 0; i < purchaseInteraction.cost; i++)
+                {
+                    __instance.GetComponent<ShopTerminalBehavior>().DropPickup(true);
+                }
+
+                // reset cost to duplicator default value of 1
+                purchaseInteraction.cost = 1;
             }
-            // reset cost to duplicator default value of 1
-            purchaseInteraction.cost = 1;
 
             if (!(bool)(Object)__instance.muzzleTransform) { return false; }
             if ((bool)(Object)__instance.bakeEffectInstance)
