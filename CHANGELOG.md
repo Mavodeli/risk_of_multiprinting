@@ -1,4 +1,6 @@
 ## Changelog
+- **1.2.0**
+    - Update for DLC3: Alloyed Collective
 - **1.1.1**
     - Fix preview image on `thunderstore.io` page
 - **1.1.0**
