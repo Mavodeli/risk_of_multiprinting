@@ -1,0 +1,41 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Compile mod",
+            "type": "shell",
+            "presentation": {
+                "panel": "new"
+            },
+            "linux": {
+                "command": "cd ${workspaceFolder} && dotnet build"
+            },
+            "windows": {
+                "command": "dotnet-build"
+            },
+            "group": {
+                "kind": "build",
+                "isDefault": false
+            }
+        },
+        {
+            "label": "Zip mod",
+            "type": "shell",
+            "linux": {
+                "command": "${workspaceFolder}/zipper.sh"
+            },
+            "windows": {
+                "command": "echo TODO"
+            }
+        },
+        {
+            "label": "Compile and zip",
+            "type": "shell",
+            "dependsOrder": "sequence",
+            "dependsOn": [
+                "Compile mod",
+                "Zip mod"
+            ]
+        }
+    ]
+}
