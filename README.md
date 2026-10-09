@@ -14,7 +14,5 @@ Scrap is consumed before any other items.
 Pressing `spacebar` or walking will abort the interaction. 
 
 ## Known incompatibilities
-- [ShareSuite](https://thunderstore.io/package/FunkFrog-and-Sipondo/ShareSuite/) - My [patched version](https://thunderstore.io/package/mavo/ShareSuiteMultiprintingCompat/) will not be updated for DLC3, in favor of proper compatibility with ShareSuite soon :)
-
-## Tested with
-- hopefully soon ShareSuite :)
+- [ShareSuite](https://thunderstore.io/package/FunkFrog-and-Sipondo/ShareSuite/) - compatibility might come after ShareSuite is stable for the new version. 
+- [ShareSuiteMultiprintingCompat](https://thunderstore.io/package/mavo/ShareSuiteMultiprintingCompat/) this is a patch made by me - it has been discontinued. 

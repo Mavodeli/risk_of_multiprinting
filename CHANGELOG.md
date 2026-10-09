@@ -1,4 +1,6 @@
 ## Changelog
+- **1.3.0**
+    - Update for DLC4: Hallowed Concepts
 - **1.2.0**
     - Update for DLC3: Alloyed Collective
 - **1.1.1**
