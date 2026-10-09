@@ -108,9 +108,9 @@ namespace risk_of_multiprinting.patches.duplicating
                 __instance.bakeEffectInstance = (GameObject)null;
             }
 
-            if (!(bool)(Object)Duplicating.releaseEffectPrefab) { return false; }
+            if (!(bool) Duplicating.releaseEffectPrefab) { return false; }
 
-            EffectManager.SimpleMuzzleFlash(Duplicating.releaseEffectPrefab, __instance.gameObject, Duplicating.muzzleString, false);
+            EffectManager.SimpleMuzzleFlash((GameObject) Duplicating.releaseEffectPrefab, __instance.gameObject, Duplicating.muzzleString, false);
 
             return false;
         }
